@@ -1,0 +1,166 @@
+ // ============================================================
+ // 数据库 Schema - 个人博客网站
+ // ORM: Prisma 4.x
+ // 数据库: MySQL 8.x (开发) / PlanetScale (生产)
+ // ============================================================
+ 
+ generator client {
+   provider = "prisma-client-js"
+ }
+ 
+ datasource db {
+   provider = "mysql"
+   url      = env("DATABASE_URL")
+ }
+ 
+ // --------------------------------------------------
+ // 个人信息
+ // --------------------------------------------------
+ model Profile {
+   id        Int          @id @default(autoincrement())
+   name      String       @db.VarChar(100)
+   title     String       @db.VarChar(200)
+   bio       String       @db.Text
+   avatar    String?      @db.VarChar(500)
+   location  String?      @db.VarChar(100)
+   email     String?      @db.VarChar(200)
+   resume    Resume?
+   socialLinks SocialLink[]
+   createdAt DateTime     @default(now())
+   updatedAt DateTime     @updatedAt
+ }
+ 
+ // --------------------------------------------------
+ // 社交链接
+ // --------------------------------------------------
+ model SocialLink {
+   id        Int     @id @default(autoincrement())
+   platform  String  @db.VarChar(50)   // GitHub, 即刻, 小红书...
+   url       String  @db.VarChar(500)
+   icon      String? @db.VarChar(50)
+   order     Int     @default(0)
+   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+   profileId Int
+ }
+ 
+ // --------------------------------------------------
+ // 简历
+ // --------------------------------------------------
+ model Resume {
+   id          Int      @id @default(autoincrement())
+   summary     String?  @db.Text
+   // JSON 格式: [{ company, title, startDate, endDate, description, highlights[] }]
+   experiences Json     @default("[]")
+   // JSON 格式: [{ school, major, degree, startDate, endDate }]
+   education   Json     @default("[]")
+   // JSON 格式: [{ name, level }]
+   skills      Json     @default("[]")
+   profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+   profileId   Int      @unique
+   createdAt   DateTime @default(now())
+   updatedAt   DateTime @updatedAt
+ }
+ 
+ // --------------------------------------------------
+ // 文章分类
+ // --------------------------------------------------
+ model Category {
+   id          Int      @id @default(autoincrement())
+   name        String   @db.VarChar(50)
+   slug        String   @unique @db.VarChar(50)
+   description String?  @db.VarChar(200)
+   posts       Post[]
+   createdAt   DateTime @default(now())
+ }
+ 
+ // --------------------------------------------------
+ // 标签
+ // --------------------------------------------------
+ model Tag {
+   id        Int       @id @default(autoincrement())
+   name      String    @unique @db.VarChar(50)
+   slug      String    @unique @db.VarChar(50)
+   postTags  PostTag[]
+   createdAt DateTime  @default(now())
+ }
+ 
+ // --------------------------------------------------
+ // 文章
+ // --------------------------------------------------
+ model Post {
+   id         Int      @id @default(autoincrement())
+   title      String   @db.VarChar(200)
+   slug       String   @unique @db.VarChar(200)
+   content    String   @db.MediumText
+   excerpt    String?  @db.VarChar(500)
+   coverImage String?  @db.VarChar(500)
+   status     PostStatus @default(DRAFT)
+   readingTime Int     @default(0)
+   category   Category @relation(fields: [categoryId], references: [id])
+   categoryId Int
+   postTags   PostTag[]
+   createdAt  DateTime @default(now())
+   updatedAt  DateTime @updatedAt
+ 
+   @@index([status])
+   @@index([categoryId])
+   @@index([createdAt])
+ }
+ 
+ enum PostStatus {
+   DRAFT
+   PUBLISHED
+   PINNED
+ }
+ 
+ // --------------------------------------------------
+ // 文章-标签关联
+ // --------------------------------------------------
+ model PostTag {
+   post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+   postId Int
+   tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+   tagId  Int
+ 
+   @@id([postId, tagId])
+ }
+ 
+ // --------------------------------------------------
+ // 作品
+ // --------------------------------------------------
+ model Project {
+   id          Int          @id @default(autoincrement())
+   title       String       @db.VarChar(200)
+   slug        String       @unique @db.VarChar(200)
+   description String       @db.Text
+   content     String       @db.MediumText
+   role        String?      @db.VarChar(100)
+   duration    String?      @db.VarChar(100)
+   url         String?      @db.VarChar(500)
+   coverImage  String?      @db.VarChar(500)
+   images      Json         @default("[]")
+   status      ProjectStatus @default(DRAFT)
+   featured    Boolean      @default(false)
+   order       Int          @default(0)
+   createdAt   DateTime     @default(now())
+   updatedAt   DateTime     @updatedAt
+ 
+   @@index([status])
+   @@index([featured])
+   @@index([order])
+ }
+ 
+ enum ProjectStatus {
+   DRAFT
+   PUBLISHED
+ }
+ 
+ // --------------------------------------------------
+ // 管理员
+ // --------------------------------------------------
+ model Admin {
+   id           Int      @id @default(autoincrement())
+   username     String   @unique @db.VarChar(50)
+   passwordHash String   @db.VarChar(200)
+   createdAt    DateTime @default(now())
+ }
