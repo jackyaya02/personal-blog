@@ -16,5 +16,11 @@ export default async function EditProjectPage({
   const project = await getProject(Number(params.id));
   if (!project) notFound();
 
-  return <ProjectEditor project={project} />;
+  // Prisma 的 images 字段是 JsonValue，转换为 string[] 给编辑器
+  const projectData = {
+    ...project,
+    images: (project.images as string[] | null) ?? null,
+  };
+
+  return <ProjectEditor project={projectData} />;
 }

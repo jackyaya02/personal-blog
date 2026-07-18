@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import ImageUploader from "./ImageUploader";
 
 export interface Category {
   id: number;
@@ -21,6 +22,7 @@ interface PostData {
   slug?: string;
   content?: string;
   excerpt?: string | null;
+  coverImage?: string | null;
   categoryId?: number;
   status?: string;
   postTags?: { tag: Tag }[];
@@ -42,6 +44,7 @@ export default function PostEditor({
   const [slug, setSlug] = useState(post?.slug || "");
   const [content, setContent] = useState(post?.content || "");
   const [excerpt, setExcerpt] = useState(post?.excerpt || "");
+  const [coverImage, setCoverImage] = useState(post?.coverImage || "");
   const [categoryId, setCategoryId] = useState(post?.categoryId || categories[0]?.id || 0);
   const [status, setStatus] = useState(post?.status || "DRAFT");
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>(
@@ -72,6 +75,7 @@ export default function PostEditor({
         slug,
         content,
         excerpt: excerpt || null,
+        coverImage: coverImage || null,
         categoryId,
         status,
         tagIds: selectedTagIds,
@@ -148,6 +152,16 @@ export default function PostEditor({
               rows={2}
               className="w-full rounded-lg border border-warm-200 px-3 py-2 text-sm outline-none focus:border-brand-300 focus:ring-1 focus:ring-brand-200"
               placeholder="文章摘要（可选）"
+            />
+          </div>
+
+          <div className="mb-4">
+            <ImageUploader
+              label="封面图"
+              value={coverImage}
+              onChange={setCoverImage}
+              aspect="16/9"
+              hint="建议尺寸 1600x900，最大 5MB，支持 jpg/png/webp/gif"
             />
           </div>
 

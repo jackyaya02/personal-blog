@@ -26,8 +26,17 @@ export default async function ProjectsPage() {
         {projects.map((project) => (
           <Link key={project.id} href={`/projects/${project.slug}`}>
             <div className="group overflow-hidden rounded-xl border border-warm-200 bg-white transition-all hover:-translate-y-1 hover:shadow-lg hover:border-brand-200">
-              <div className="aspect-[16/10] flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 text-4xl font-bold text-gray-300">
-                {project.title.charAt(0)}
+              <div className="aspect-[16/10] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 text-4xl font-bold text-gray-300">
+                {project.coverImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={project.coverImage}
+                    alt={project.title}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  project.title.charAt(0)
+                )}
               </div>
               <div className="p-5">
                 {project.featured && (

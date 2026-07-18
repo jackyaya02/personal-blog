@@ -33,14 +33,26 @@ export default async function TagPage({ params }: { params: { slug: string } }) 
       <div className="space-y-1">
         {posts.map((post) => (
           <Link key={post.id} href={"/blog/" + post.slug}>
-            <article className="group border-b border-warm-200 py-4 transition-colors hover:bg-brand-50/30 -mx-4 px-4 rounded-lg">
-              <div className="mb-1 text-xs text-gray-400">
-                {post.createdAt.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
-                <span className="mx-1">·</span>
-                <span className="rounded bg-warm-100 px-1.5 py-0.5 text-gray-500">{post.category.name}</span>
+            <article className="group flex gap-4 border-b border-warm-200 py-4 transition-colors hover:bg-brand-50/30 -mx-4 px-4 rounded-lg">
+              {post.coverImage && (
+                <div className="flex-shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={post.coverImage}
+                    alt={post.title}
+                    className="h-16 w-16 rounded-lg object-cover"
+                  />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 text-xs text-gray-400">
+                  {post.createdAt.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+                  <span className="mx-1">·</span>
+                  <span className="rounded bg-warm-100 px-1.5 py-0.5 text-gray-500">{post.category.name}</span>
+                </div>
+                <h2 className="font-medium text-gray-900 group-hover:text-brand-600">{post.title}</h2>
+                {post.excerpt && <p className="mt-1 text-sm text-gray-500 line-clamp-1">{post.excerpt}</p>}
               </div>
-              <h2 className="font-medium text-gray-900 group-hover:text-brand-600">{post.title}</h2>
-              {post.excerpt && <p className="mt-1 text-sm text-gray-500 line-clamp-1">{post.excerpt}</p>}
             </article>
           </Link>
         ))}

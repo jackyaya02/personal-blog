@@ -33,13 +33,21 @@ export async function PUT(
   try {
     const body = await request.json();
     const id = Number(params.id);
-    const { title, slug, description, content, role, duration, url, status, featured, order } = body;
+    const { title, slug, description, content, role, duration, url, coverImage, images, status, featured, order } = body;
 
     const existing = await prisma.project.findUnique({ where: { id } });
     if (!existing) {
       return NextResponse.json(
         { code: 40401, data: null, message: "作品不存在" },
         { status: 404 }
+      );
+    }
+
+    // 校验 images 必须是数组
+    if (images !== undefined && !Array.isArray(images)) {
+      return NextResponse.json(
+        { code: 40203, data: null, message: "images 必须是数组" },
+        { status: 400 }
       );
     }
 
@@ -63,6 +71,11 @@ export async function PUT(
         role: role ?? existing.role,
         duration: duration ?? existing.duration,
         url: url ?? existing.url,
+        coverImage: coverImage !== undefined ? (coverImage || null) : existing.coverImage,
+        // images 是 JSON 字段，undefined 表示不更新；空数组表示清空
+        ...(images !== undefined
+          ? { images: Array.isArray(images) ? images : [] }
+          : {}),
         status: status ?? existing.status,
         featured: featured ?? existing.featured,
         order: order ?? existing.order,

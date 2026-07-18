@@ -30,8 +30,17 @@ export default async function HomePage() {
   return (
     <div className="space-y-16">
       <section className="mx-auto max-w-3xl text-center">
-        <div className="mx-auto mb-6 flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 text-4xl font-bold text-gray-400">
-          {profile?.name?.charAt(0) || "?"}
+        <div className="mx-auto mb-6 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-gray-100 to-gray-200 text-4xl font-bold text-gray-400">
+          {profile?.avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.avatar}
+              alt={profile.name || "头像"}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            profile?.name?.charAt(0) || "?"
+          )}
         </div>
         <h1 className="mb-3 text-4xl font-bold tracking-tight text-gray-900">
           {profile?.name || "Your Name"}

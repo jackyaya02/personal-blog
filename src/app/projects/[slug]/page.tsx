@@ -39,13 +39,42 @@ export default async function ProjectDetailPage({ params }: { params: { slug: st
         </div>
       </div>
 
-      <div className="aspect-video mb-8 flex items-center justify-center rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 text-6xl font-bold text-gray-200">
-        {project.title.charAt(0)}
+      <div className="aspect-video mb-8 flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 to-gray-100">
+        {project.coverImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={project.coverImage}
+            alt={project.title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <span className="text-6xl font-bold text-gray-200">
+            {project.title.charAt(0)}
+          </span>
+        )}
       </div>
 
       <article className="prose prose-gray max-w-none">
         {renderMarkdown(project.content)}
       </article>
+
+      {/* 图片集 */}
+      {Array.isArray(project.images) && project.images.length > 0 && (
+        <div className="mt-12">
+          <h2 className="mb-6 text-xl font-bold text-gray-900">作品截图</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {project.images.map((image, index) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={index}
+                src={image as string}
+                alt={`${project.title} 截图 ${index + 1}`}
+                className="w-full rounded-lg border border-warm-200 object-cover"
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

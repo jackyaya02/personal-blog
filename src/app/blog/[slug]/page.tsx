@@ -29,6 +29,16 @@ export default async function BlogDetailPage({ params }: { params: { slug: strin
       </Link>
       <article>
         <header className="mb-8">
+          {post.coverImage && (
+            <div className="mb-6 overflow-hidden rounded-xl bg-gray-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={post.coverImage}
+                alt={post.title}
+                className="aspect-[16/9] w-full object-cover"
+              />
+            </div>
+          )}
           <div className="mb-3 flex items-center gap-2 text-sm text-gray-500">
             <span>{post.createdAt.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}</span>
             <span>·</span>

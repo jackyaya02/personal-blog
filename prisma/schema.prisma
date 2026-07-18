@@ -156,11 +156,35 @@
  }
  
  // --------------------------------------------------
- // 管理员
- // --------------------------------------------------
- model Admin {
-   id           Int      @id @default(autoincrement())
-   username     String   @unique @db.VarChar(50)
-   passwordHash String   @db.VarChar(200)
-   createdAt    DateTime @default(now())
- }
+// 管理员
+// --------------------------------------------------
+model Admin {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique @db.VarChar(50)
+  passwordHash String   @db.VarChar(200)
+  createdAt    DateTime @default(now())
+}
+
+// --------------------------------------------------
+// 联系留言
+// --------------------------------------------------
+model ContactMessage {
+  id        Int             @id @default(autoincrement())
+  name      String          @db.VarChar(100)
+  email     String          @db.VarChar(200)
+  subject   String?         @db.VarChar(200)
+  message   String          @db.Text
+  status    MessageStatus   @default(UNREAD)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum MessageStatus {
+  UNREAD    // 未读
+  READ      // 已读
+  REPLIED   // 已回复
+  ARCHIVED  // 已归档
+}

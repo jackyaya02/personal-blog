@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import ImageUploader from "./ImageUploader";
+import MultiImageUploader from "./MultiImageUploader";
 
 interface ProjectData {
   id?: number;
@@ -14,6 +16,8 @@ interface ProjectData {
   role?: string | null;
   duration?: string | null;
   url?: string | null;
+  coverImage?: string | null;
+  images?: string[] | null;
   status?: string;
   featured?: boolean;
   order?: number;
@@ -30,6 +34,10 @@ export default function ProjectEditor({ project }: { project?: ProjectData }) {
   const [role, setRole] = useState(project?.role || "");
   const [duration, setDuration] = useState(project?.duration || "");
   const [url, setUrl] = useState(project?.url || "");
+  const [coverImage, setCoverImage] = useState(project?.coverImage || "");
+  const [images, setImages] = useState<string[]>(
+    Array.isArray(project?.images) ? project!.images! : []
+  );
   const [status, setStatus] = useState(project?.status || "DRAFT");
   const [featured, setFeatured] = useState(project?.featured || false);
   const [order, setOrder] = useState(project?.order ?? 0);
@@ -55,6 +63,8 @@ export default function ProjectEditor({ project }: { project?: ProjectData }) {
         role: role || null,
         duration: duration || null,
         url: url || null,
+        coverImage: coverImage || null,
+        images,
         status,
         featured,
         order: Number(order),
@@ -123,6 +133,16 @@ export default function ProjectEditor({ project }: { project?: ProjectData }) {
             <p className="mt-1 text-xs text-gray-400">将用于 /projects/{slug || "..."}</p>
           </div>
 
+          <div className="mb-4">
+            <ImageUploader
+              label="封面图"
+              value={coverImage}
+              onChange={setCoverImage}
+              aspect="16/10"
+              hint="建议尺寸 1600x1000，最大 5MB，支持 jpg/png/webp/gif"
+            />
+          </div>
+
           <div className="mb-4 grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">角色</label>
@@ -166,6 +186,17 @@ export default function ProjectEditor({ project }: { project?: ProjectData }) {
               rows={2}
               className="w-full rounded-lg border border-warm-200 px-3 py-2 text-sm outline-none focus:border-brand-300 focus:ring-1 focus:ring-brand-200"
               placeholder="一句话描述作品"
+            />
+          </div>
+
+          <div className="mb-4">
+            <MultiImageUploader
+              label="作品图片集"
+              value={images}
+              onChange={setImages}
+              aspect="16/10"
+              max={10}
+              hint="最多 10 张图片，每张最大 5MB，支持 jpg/png/webp/gif。可拖拽缩略图左右箭头调整顺序"
             />
           </div>
 

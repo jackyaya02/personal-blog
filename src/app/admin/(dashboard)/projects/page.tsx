@@ -1,31 +1,90 @@
 import Link from "next/link";
 import prisma from "@/lib/prisma";
-import { Plus, Edit3, Trash2, Star } from "lucide-react";
+import { Plus, Edit3, Star } from "lucide-react";
 import DeleteProjectButton from "@/components/admin/DeleteProjectButton";
+import Pagination from "@/components/Pagination";
+import SearchBox from "@/components/SearchBox";
+import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-async function getProjects() {
-  return prisma.project.findMany({
-    orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-  });
+const PAGE_SIZE = 15;
+
+async function getProjectsData(searchParams: { page?: string; q?: string }) {
+  const page = Math.max(1, Number(searchParams.page) || 1);
+  const q = searchParams.q?.trim() || "";
+
+  const where: Prisma.ProjectWhereInput = q.length > 0
+    ? {
+        OR: [
+          { title: { contains: q } },
+          { description: { contains: q } },
+          { content: { contains: q } },
+        ],
+      }
+    : {};
+
+  const [projects, total] = await Promise.all([
+    prisma.project.findMany({
+      where,
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.project.count({ where }),
+  ]);
+
+  return {
+    projects,
+    page,
+    totalPages: Math.ceil(total / PAGE_SIZE),
+    total,
+    q,
+  };
 }
 
-export default async function AdminProjectsPage() {
-  const projects = await getProjects();
+export default async function AdminProjectsPage({
+  searchParams,
+}: {
+  searchParams: { page?: string; q?: string };
+}) {
+  const { projects, page, totalPages, total, q } = await getProjectsData(searchParams);
+
+  const getPageHref = (p: number) => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (p > 1) params.set("page", String(p));
+    const qs = params.toString();
+    return qs ? `/admin/projects?${qs}` : "/admin/projects";
+  };
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">作品管理</h1>
         <Link href="/admin/projects/new" className="btn-primary flex items-center gap-2">
           <Plus size={16} /> 新建作品
         </Link>
       </div>
 
+      {/* 搜索栏 */}
+      <div className="mb-4 max-w-md">
+        <SearchBox placeholder="搜索作品标题、描述、内容..." paramName="q" />
+      </div>
+
+      {/* 结果统计 */}
+      <p className="mb-4 text-sm text-gray-500">
+        共 <span className="font-medium text-gray-900">{total}</span> 个作品
+        {q && (
+          <>
+            {" "}匹配 “<span className="font-medium text-brand-600">{q}</span>”
+          </>
+        )}
+      </p>
+
       {projects.length === 0 ? (
         <div className="rounded-xl border border-warm-200 bg-white p-12 text-center text-gray-500">
-          暂无作品，点击右上角新建
+          {q ? "未找到匹配的作品" : "暂无作品，点击右上角新建"}
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-warm-200 bg-white">
@@ -87,6 +146,17 @@ export default async function AdminProjectsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* 分页 */}
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            getPageHref={getPageHref}
+          />
         </div>
       )}
     </div>

@@ -1,16 +1,14 @@
 import Link from "next/link";
 import prisma from "@/lib/prisma";
-import { Plus, Edit3, Trash2 } from "lucide-react";
+import { Plus, Edit3 } from "lucide-react";
 import DeletePostButton from "@/components/admin/DeletePostButton";
+import Pagination from "@/components/Pagination";
+import SearchBox from "@/components/SearchBox";
+import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-async function getPosts() {
-  return prisma.post.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { category: { select: { name: true } } },
-  });
-}
+const PAGE_SIZE = 15;
 
 const statusLabel: Record<string, { text: string; className: string }> = {
   DRAFT: { text: "草稿", className: "bg-gray-100 text-gray-600" },
@@ -18,21 +16,82 @@ const statusLabel: Record<string, { text: string; className: string }> = {
   PINNED: { text: "置顶", className: "bg-amber-50 text-amber-600" },
 };
 
-export default async function AdminPostsPage() {
-  const posts = await getPosts();
+async function getPostsData(searchParams: { page?: string; q?: string }) {
+  const page = Math.max(1, Number(searchParams.page) || 1);
+  const q = searchParams.q?.trim() || "";
+
+  const where: Prisma.PostWhereInput = q.length > 0
+    ? {
+        OR: [
+          { title: { contains: q } },
+          { excerpt: { contains: q } },
+          { content: { contains: q } },
+        ],
+      }
+    : {};
+
+  const [posts, total] = await Promise.all([
+    prisma.post.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: { category: { select: { name: true } } },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.post.count({ where }),
+  ]);
+
+  return {
+    posts,
+    page,
+    totalPages: Math.ceil(total / PAGE_SIZE),
+    total,
+    q,
+  };
+}
+
+export default async function AdminPostsPage({
+  searchParams,
+}: {
+  searchParams: { page?: string; q?: string };
+}) {
+  const { posts, page, totalPages, total, q } = await getPostsData(searchParams);
+
+  const getPageHref = (p: number) => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (p > 1) params.set("page", String(p));
+    const qs = params.toString();
+    return qs ? `/admin/posts?${qs}` : "/admin/posts";
+  };
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">文章管理</h1>
         <Link href="/admin/posts/new" className="btn-primary flex items-center gap-2">
           <Plus size={16} /> 新建文章
         </Link>
       </div>
 
+      {/* 搜索栏 */}
+      <div className="mb-4 max-w-md">
+        <SearchBox placeholder="搜索文章标题、摘要、内容..." paramName="q" />
+      </div>
+
+      {/* 结果统计 */}
+      <p className="mb-4 text-sm text-gray-500">
+        共 <span className="font-medium text-gray-900">{total}</span> 篇文章
+        {q && (
+          <>
+            {" "}匹配 “<span className="font-medium text-brand-600">{q}</span>”
+          </>
+        )}
+      </p>
+
       {posts.length === 0 ? (
         <div className="rounded-xl border border-warm-200 bg-white p-12 text-center text-gray-500">
-          暂无文章，点击右上角新建
+          {q ? "未找到匹配的文章" : "暂无文章，点击右上角新建"}
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-warm-200 bg-white">
@@ -85,6 +144,17 @@ export default async function AdminPostsPage() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* 分页 */}
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            getPageHref={getPageHref}
+          />
         </div>
       )}
     </div>
