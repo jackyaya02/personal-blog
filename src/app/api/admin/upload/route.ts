@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 import { randomBytes } from "crypto";
 
 // 允许的图片 MIME 类型
@@ -65,22 +64,16 @@ export async function POST(request: Request) {
     const random = randomBytes(6).toString("hex");
     const filename = `${timestamp}-${random}.${ext}`;
 
-    // 确保目录存在
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadDir, { recursive: true });
+    // 上传到 Vercel Blob（兼容本地开发与服务端环境）
+    const blob = await put(filename, file, {
+      access: "public",
+      contentType: file.type,
+    });
 
-    // 写入文件
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const filePath = path.join(uploadDir, filename);
-    await writeFile(filePath, buffer);
-
-    // 返回可访问的 URL
-    const url = `/uploads/${filename}`;
-
+    // 返回可访问的 URL（Vercel Blob 返回完整 CDN URL）
     return NextResponse.json({
       code: 0,
-      data: { url, filename },
+      data: { url: blob.url, filename, pathname: blob.pathname },
       message: "success",
     });
   } catch (error) {
