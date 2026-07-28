@@ -81,6 +81,7 @@ async function main() {
     { name: "数据分析", slug: "data-analytics", description: "数据驱动决策" },
     { name: "职业成长", slug: "career", description: "产品经理成长路径" },
     { name: "工具推荐", slug: "tools", description: "效率工具与资源分享" },
+    { name: "生活", slug: "life", description: "生活随笔：阅读、摄影、灵感、设计观察" },
   ];
   const catMap: Record<string, number> = {};
   for (const c of categoryData) {
@@ -91,7 +92,7 @@ async function main() {
     });
     catMap[c.slug] = cat.id;
   }
-  console.log("✅ 分类: 6 个");
+  console.log("✅ 分类: 7 个");
 
   // ── 5. 标签 ──
   const tagData = [
@@ -101,6 +102,10 @@ async function main() {
     { name: "产品思维", slug: "product-thinking" },
     { name: "用户增长", slug: "growth" },
     { name: "设计系统", slug: "design-system" },
+    { name: "阅读", slug: "reading" },
+    { name: "摄影", slug: "photography" },
+    { name: "灵感收藏", slug: "inspiration" },
+    { name: "设计观察", slug: "design-observation" },
   ];
   const tagMap: Record<string, number> = {};
   for (const t of tagData) {
@@ -111,7 +116,7 @@ async function main() {
     });
     tagMap[t.slug] = tag.id;
   }
-  console.log("✅ 标签: 6 个");
+  console.log("✅ 标签: 10 个");
 
   // ── 6. 文章 ──
   const posts = [
@@ -121,6 +126,11 @@ async function main() {
     { title: "从 0 到 1 搭建 AI 产品的设计规范", slug: "ai-product-design-system", content: `# AI 产品设计规范\n\n## 核心要素\n\n### 1. 状态管理\n思考中、生成中、出错时的状态设计。\n\n### 2. 反馈机制\n用户需要知道 AI 在做什么、为什么、如何修正。\n\n### 3. 信任设计\n透明性、可控性、隐私保护。\n\n> AI 产品的设计不是让 AI 看起来更聪明，而是让用户感觉更可控。`, excerpt: "AI 产品设计不同于传统 UI 设计，本文分享 AI 产品专属的设计规范搭建经验。", categorySlug: "ai-product", tagSlugs: ["design-system", "aigc"], readingTime: 7 },
     { title: "数据驱动决策：产品经理必备的数据分析框架", slug: "data-driven-decision-making", content: `# 数据驱动决策\n\n## 金字塔分析框架\n\n### 第一层：健康指标\nDAU/MAU、留存率、转化率\n\n### 第二层：行为指标\n核心功能使用频率、用户路径分析\n\n### 第三层：业务指标\nLTV、CAC、ROI\n\n> 数据告诉你发生了什么，但不会告诉你为什么发生。`, excerpt: "产品经理如何用数据做决策？本文分享一套实用的数据分析框架。", categorySlug: "data-analytics", tagSlugs: ["product-thinking", "growth"], readingTime: 9 },
     { title: "提示词工程入门：写给产品经理的 Prompt 指南", slug: "prompt-engineering-for-pm", content: `# 提示词工程入门\n\n## 核心原则\n\n### 1. 明确角色\n"你是一个资深产品经理..."\n\n### 2. 提供上下文\n提供背景信息。\n\n### 3. 指定输出格式\n"请用 Markdown 表格输出"\n\n> 好的提示词就像好的产品需求文档——清晰、具体、可执行。`, excerpt: "产品经理必学的提示词工程技巧，让 AI 真正成为你的生产力工具。", categorySlug: "tools", tagSlugs: ["prompt", "aigc"], readingTime: 5 },
+    // ── 生活类文章 ──
+    { title: "读《设计心理学》：看见日常物品里的善意", slug: "reading-design-of-everyday-things", content: `# 读《设计心理学》\n\n诺曼说，好的设计是看不见的。\n\n## 让我停下来想很久的几个细节\n\n### 推拉门\n为什么我们总会推错那一扇？不是用户笨，是门没给对暗示。\n\n### 灯开关\n墙上一排开关，没人记得哪个对应哪盏灯。\n\n## 体会\n\n> 设计师的温柔，是把「如何使用」悄悄写进物品本身。\n\n读完这本书，我开始用新的眼光看家里每一件物品。`, excerpt: "诺曼的《设计心理学》让我重新看待日常物品，那些「反人类设计」背后其实是设计者的缺席。", categorySlug: "life", tagSlugs: ["reading"], readingTime: 6 },
+    { title: "胶片日记：京都七日的光与影", slug: "photography-kyoto-7-days", content: `# 胶片日记：京都七日\n\n带着一台老旁轴，去了京都。\n\n## 第一卷：清晨的鸭川\n早上六点，河边只有晨跑的人。光从东山背后漫过来，水面像被慢慢点亮。\n\n## 第二卷：岚山的竹影\n胶片擅长记录层次，竹林里的明暗交替，是数字难以复刻的呼吸感。\n\n## 第三卷：夜晚的先斗町\n红灯笼、木格栅、窄巷。柯达 Portra 800 把夜色拍得温暖而克制。\n\n> 摄影不是记录风景，是记录自己看见风景的方式。`, excerpt: "用三卷胶片记录京都七日，从鸭川的清晨到先斗町的夜晚，每一帧都是时间的切片。", categorySlug: "life", tagSlugs: ["photography"], readingTime: 7 },
+    { title: "灵感本：那些让我心动的句子", slug: "inspiration-quotes-i-love", content: `# 灵感本\n\n我有一个小本子，专门抄写让我心动的句子。\n\n## 关于创造\n\n> "创造力只是把事物连接起来。"——乔布斯\n\n这句话让我放下对"原创"的执念，开始大胆地借鉴与重组。\n\n## 关于时间\n\n> "时间不会让你变好，是你在时间里的选择让你变好。"\n\n焦虑时就读这一句。\n\n## 关于温柔\n\n> "温柔是一种力量，不是软弱。"\n\n这是我做产品的底色。\n\n> 灵感不是想出来的，是收集出来的。`, excerpt: "我从读书、电影、对话中收集的句子，每一句都曾在我某个低谷时刻拉过我一把。", categorySlug: "life", tagSlugs: ["inspiration"], readingTime: 5 },
+    { title: "设计观察：便利店的灯为什么那么亮", slug: "design-observation-convenience-store-light", content: `# 便利店的灯为什么那么亮\n\n深夜路过 7-11，推门进去，光亮得像手术室。\n\n## 为什么\n\n### 1. 安全感\n亮 = 透明 = 没有藏匿的空间。夜里独行的女性会本能地走向亮处。\n\n### 2. 清晰度\n商品标签、保质期、价格——所有信息必须瞬间可读。\n\n### 3. 情绪唤醒\n冷白光抑制褪黑素，让人保持清醒，购买决策更冲动。\n\n## 反思\n\n> 设计的本质，是用光线、空间、色彩，悄悄引导人的行为。\n\n下次你去便利店，抬头看看那盏灯，那是产品经理的一道光。`, excerpt: "从便利店过亮的灯光切入，拆解光线设计如何影响人的安全感、决策与情绪。", categorySlug: "life", tagSlugs: ["design-observation"], readingTime: 6 },
   ];
 
   for (const p of posts) {
@@ -150,7 +160,7 @@ async function main() {
       await prisma.postTag.create({ data: { postId: post.id, tagId: tagMap[ts] } });
     }
   }
-  console.log("✅ 文章: 6 篇");
+  console.log("✅ 文章: 10 篇");
 
   // ── 7. 作品 ──
   const projects = [

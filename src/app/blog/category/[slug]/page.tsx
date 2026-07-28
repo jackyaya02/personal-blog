@@ -7,7 +7,16 @@ import { ArrowLeft } from "lucide-react";
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const category = await prisma.category.findUnique({ where: { slug: params.slug } });
   if (!category) return { title: "未找到" };
-  return { title: category.name + " - 博客" };
+  const desc = category.description || `${category.name}分类下的所有文章`;
+  return {
+    title: category.name + " - 博客",
+    description: desc,
+    openGraph: {
+      title: `${category.name} - 博客`,
+      description: desc,
+      type: "website",
+    },
+  };
 }
 
 export default async function CategoryPage({ params }: { params: { slug: string } }) {

@@ -1,0 +1,10 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# 不允许爬取管理后台与 API
+Disallow: /admin/
+Disallow: /api/
+
+# Sitemap 位置
+Sitemap: http://localhost:3000/sitemap.xml

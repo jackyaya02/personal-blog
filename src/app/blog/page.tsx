@@ -3,11 +3,17 @@ import type { Metadata } from "next";
 import prisma from "@/lib/prisma";
 import Pagination from "@/components/Pagination";
 import SearchBox from "@/components/SearchBox";
+import PostCard from "@/components/PostCard";
 import type { Prisma } from "@prisma/client";
 
 export const metadata: Metadata = {
   title: "博客",
   description: "AI 产品、用户体验、产品方法论",
+  openGraph: {
+    title: "博客",
+    description: "AI 产品、用户体验、产品方法论",
+    type: "website",
+  },
 };
 
 const PAGE_SIZE = 10;
@@ -16,11 +22,12 @@ async function getBlogData(searchParams: { page?: string; q?: string }) {
   const page = Math.max(1, Number(searchParams.page) || 1);
   const q = searchParams.q?.trim() || "";
 
-  // 构造查询条件
+  // 构造查询条件：排除生活分类（生活类文章在 /life 页面展示）
   const where: Prisma.PostWhereInput = q.length > 0
     ? {
         AND: [
           { status: { in: ["PUBLISHED", "PINNED"] } },
+          { category: { slug: { not: "life" } } },
           {
             OR: [
               { title: { contains: q } },
@@ -30,7 +37,10 @@ async function getBlogData(searchParams: { page?: string; q?: string }) {
           },
         ],
       }
-    : { status: { in: ["PUBLISHED", "PINNED"] } };
+    : {
+        status: { in: ["PUBLISHED", "PINNED"] },
+        category: { slug: { not: "life" } },
+      };
 
   const [posts, total, categories, tags] = await Promise.all([
     prisma.post.findMany({
@@ -41,8 +51,16 @@ async function getBlogData(searchParams: { page?: string; q?: string }) {
       take: PAGE_SIZE,
     }),
     prisma.post.count({ where }),
-    prisma.category.findMany({ orderBy: { name: "asc" } }),
-    prisma.tag.findMany({ orderBy: { name: "asc" } }),
+    prisma.category.findMany({
+      where: { slug: { not: "life" } },
+      orderBy: { name: "asc" },
+      include: { _count: { select: { posts: { where: { status: { in: ["PUBLISHED", "PINNED"] } } } } } },
+    }),
+    // 标签按文章数倒序排序
+    prisma.tag.findMany({
+      orderBy: { postTags: { _count: "desc" } },
+      include: { _count: { select: { postTags: { where: { post: { status: { in: ["PUBLISHED", "PINNED"] } } } } } } },
+    }),
   ]);
 
   return {
@@ -77,6 +95,34 @@ export default async function BlogPage({
       <h1 className="mb-4 text-3xl font-bold tracking-tight text-gray-900">博客</h1>
       <p className="mb-6 text-gray-600">关于 AI 产品、用户体验、产品方法论的思考与分享。</p>
 
+      {/* 分类 Tab（横向滚动） */}
+      <div className="mb-6 -mx-4 overflow-x-auto px-4 pb-2">
+        <div className="flex min-w-max gap-2">
+          <Link
+            href="/blog"
+            className={`inline-flex min-h-[36px] items-center whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              !q ? "bg-brand-600 text-white" : "bg-warm-100 text-gray-600 hover:bg-warm-200"
+            }`}
+          >
+            全部
+          </Link>
+          {categories.map((cat) => (
+            <Link
+              key={cat.id}
+              href={`/blog/category/${cat.slug}`}
+              className={`inline-flex min-h-[36px] items-center whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                "bg-warm-100 text-gray-600 hover:bg-warm-200"
+              }`}
+            >
+              {cat.name}
+              {cat._count.posts > 0 && (
+                <span className="ml-1.5 text-xs opacity-60">{cat._count.posts}</span>
+              )}
+            </Link>
+          ))}
+        </div>
+      </div>
+
       {/* 搜索框 */}
       <div className="mb-8 max-w-md">
         <SearchBox placeholder="搜索文章标题、摘要或内容..." paramName="q" />
@@ -84,7 +130,7 @@ export default async function BlogPage({
 
       <div className="grid gap-10 md:grid-cols-[1fr_220px]">
         {/* Posts */}
-        <div className="space-y-1">
+        <div>
           {/* 搜索结果提示 */}
           {q && (
             <p className="mb-4 text-sm text-gray-500">
@@ -93,51 +139,13 @@ export default async function BlogPage({
             </p>
           )}
 
-          {posts.map((post) => (
-            <Link key={post.id} href={`/blog/${post.slug}`}>
-              <article className="group flex flex-col gap-4 border-b border-gray-100 py-5 transition-colors hover:bg-gray-50/50 -mx-4 px-4 rounded-lg sm:flex-row">
-                {post.coverImage && (
-                  <div className="flex-shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={post.coverImage}
-                      alt={post.title}
-                      className="h-40 w-full rounded-lg object-cover sm:h-24 sm:w-36"
-                    />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="mb-1 flex items-center gap-2 text-xs text-gray-400">
-                    <span>{post.createdAt.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}</span>
-                    <span>·</span>
-                    <span className="rounded bg-warm-100 px-2 py-0.5 text-gray-500">{post.category.name}</span>
-                    {post.status === "PINNED" && (
-                      <span className="rounded bg-brand-50 px-2 py-0.5 text-brand-600">置顶</span>
-                    )}
-                  </div>
-                  <h2 className="mb-1.5 text-lg font-semibold text-gray-900 group-hover:text-brand-600">
-                    {post.title}
-                  </h2>
-                  {post.excerpt && (
-                    <p className="text-sm text-gray-500 line-clamp-2">{post.excerpt}</p>
-                  )}
-                  <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
-                    <span>{post.readingTime} 分钟阅读</span>
-                    {post.postTags.length > 0 && (
-                      <>
-                        <span>·</span>
-                        {post.postTags.map((pt) => (
-                          <span key={pt.tag.id} className="text-gray-400 hover:text-indigo-600">#{pt.tag.name}</span>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                </div>
-              </article>
-            </Link>
-          ))}
-
-          {posts.length === 0 && (
+          {posts.length > 0 ? (
+            <div className="space-y-6">
+              {posts.map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
+            </div>
+          ) : (
             <div className="py-20 text-center">
               <p className="text-gray-400">
                 {q ? "未找到匹配的文章，换个关键词试试" : "暂无文章"}
@@ -168,19 +176,28 @@ export default async function BlogPage({
           <div>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">分类</h3>
             <div className="space-y-1">
+              <Link
+                href="/blog"
+                className="block rounded px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-brand-50 hover:text-brand-600"
+              >
+                全部
+              </Link>
               {categories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/blog/category/${cat.slug}`}
-                  className="block rounded px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-brand-50 hover:text-brand-600"
+                  className="flex min-h-[36px] items-center justify-between rounded px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-brand-50 hover:text-brand-600"
                 >
-                  {cat.name}
+                  <span>{cat.name}</span>
+                  {cat._count.posts > 0 && (
+                    <span className="text-xs text-gray-400">{cat._count.posts}</span>
+                  )}
                 </Link>
               ))}
             </div>
           </div>
 
-          {/* Tags */}
+          {/* Tags - 按文章数排序 */}
           <div>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">标签</h3>
             <div className="flex flex-wrap gap-2">
@@ -191,8 +208,14 @@ export default async function BlogPage({
                   className="tag"
                 >
                   {tag.name}
+                  {tag._count.postTags > 0 && (
+                    <span className="ml-1 text-xs opacity-60">{tag._count.postTags}</span>
+                  )}
                 </Link>
               ))}
+              {tags.length === 0 && (
+                <p className="text-sm text-gray-400">暂无标签</p>
+              )}
             </div>
           </div>
         </aside>

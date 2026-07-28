@@ -1,12 +1,30 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import prisma from "@/lib/prisma";
-import { Mail, ExternalLink, MessageSquare } from "lucide-react";
+import { Mail, Globe, MessageSquare } from "lucide-react";
+import { GithubIcon, TwitterIcon, LinkedinIcon } from "@/components/BrandIcons";
 import ContactForm from "@/components/ContactForm";
 
 export const metadata: Metadata = {
   title: "联系",
+  description: "通过邮箱或社交平台联系我，或在线留言",
+  openGraph: {
+    title: "联系我",
+    description: "通过邮箱或社交平台联系我，或在线留言",
+    type: "website",
+  },
 };
+
+// 根据平台名称返回对应图标
+function getPlatformIcon(platform: string) {
+  const lower = platform.toLowerCase();
+  if (lower.includes("github")) return <GithubIcon size={20} />;
+  if (lower.includes("linkedin")) return <LinkedinIcon size={20} />;
+  if (lower.includes("twitter") || lower.includes("即刻") || lower.includes("x")) return <TwitterIcon size={20} />;
+  if (lower.includes("邮箱") || lower.includes("email") || lower.includes("mail")) return <Mail size={20} />;
+  // 小红书 / 其他平台用通用图标
+  return <Globe size={20} />;
+}
 
 async function getContact() {
   const profile = await prisma.profile.findFirst({
@@ -57,13 +75,12 @@ export default async function ContactPage() {
               className="flex items-center gap-4 rounded-lg border border-warm-200 p-4 transition-colors hover:border-brand-200"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warm-100">
-                <ExternalLink size={20} className="text-gray-600" />
+                {getPlatformIcon(link.platform)}
               </div>
               <div className="flex-1">
                 <p className="font-medium text-gray-900">{link.platform}</p>
                 <p className="text-sm text-gray-500">{link.url.replace(/^https?:\/\//, "")}</p>
               </div>
-              <ExternalLink size={16} className="text-gray-400" />
             </Link>
           ))}
 

@@ -5,6 +5,11 @@ import prisma from "@/lib/prisma";
 export const metadata: Metadata = {
   title: "作品",
   description: "我的产品设计作品集",
+  openGraph: {
+    title: "作品集",
+    description: "我的产品设计作品集",
+    type: "website",
+  },
 };
 
 async function getProjects() {
@@ -25,8 +30,8 @@ export default async function ProjectsPage() {
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => (
           <Link key={project.id} href={`/projects/${project.slug}`}>
-            <div className="group overflow-hidden rounded-xl border border-warm-200 bg-white transition-all hover:-translate-y-1 hover:shadow-lg hover:border-brand-200">
-              <div className="aspect-[16/10] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 text-4xl font-bold text-gray-300">
+            <div className="group overflow-hidden rounded-2xl border border-warm-200 bg-white shadow-card transition-all hover:-translate-y-1 hover:shadow-card-hover hover:border-brand-300">
+              <div className="aspect-[16/10] flex items-center justify-center overflow-hidden bg-gradient-to-br from-brand-100 via-brand-50 to-warm-100 text-5xl font-bold text-brand-300">
                 {project.coverImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -35,7 +40,7 @@ export default async function ProjectsPage() {
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (
-                  project.title.charAt(0)
+                  <span className="drop-shadow-sm">{project.title.charAt(0)}</span>
                 )}
               </div>
               <div className="p-5">

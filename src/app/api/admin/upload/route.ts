@@ -27,8 +27,8 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file");
 
-    // 校验文件存在
-    if (!file || !(file instanceof File)) {
+    // 校验文件存在且是文件类型（FormDataEntryValue = string | File）
+    if (!file || typeof file === "string") {
       return NextResponse.json(
         { code: 40201, data: null, message: "未接收到文件" },
         { status: 400 }

@@ -4,6 +4,12 @@ import PdfDownloadButton from "@/components/PdfDownloadButton";
 
 export const metadata: Metadata = {
   title: "简历",
+  description: "工作经历、教育背景与技能",
+  openGraph: {
+    title: "简历",
+    description: "工作经历、教育背景与技能",
+    type: "profile",
+  },
 };
 
 async function getResume() {
@@ -17,9 +23,16 @@ export default async function ResumePage() {
   const resume = await getResume();
   if (!resume) return <div className="py-20 text-center text-gray-500">暂无简历信息</div>;
 
-  const experiences = Array.isArray(resume.experiences) ? resume.experiences as Array<{
+  const rawExperiences = Array.isArray(resume.experiences) ? resume.experiences as Array<{
     company: string; title: string; startDate: string; endDate: string; description: string; highlights: string[];
   }> : [];
+  // 按时间倒序排序（先按 endDate 降序，再按 startDate 降序）
+  const experiences = [...rawExperiences].sort((a, b) => {
+    const aEnd = a.endDate || "9999";
+    const bEnd = b.endDate || "9999";
+    if (aEnd !== bEnd) return bEnd.localeCompare(aEnd);
+    return (b.startDate || "").localeCompare(a.startDate || "");
+  });
   const education = Array.isArray(resume.education) ? resume.education as Array<{
     school: string; major: string; degree: string; startDate: string; endDate: string;
   }> : [];

@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { renderMarkdown } from "@/lib/markdown";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ChevronRight, ExternalLink } from "lucide-react";
+import CodeHighlighter from "@/components/CodeHighlighter";
 
 async function getProject(slug: string) {
   return prisma.project.findFirst({ where: { slug, status: "PUBLISHED" } });
@@ -12,7 +13,18 @@ async function getProject(slug: string) {
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const project = await getProject(params.slug);
   if (!project) return { title: "未找到" };
-  return { title: project.title, description: project.description };
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  return {
+    title: project.title,
+    description: project.description,
+    openGraph: {
+      title: project.title,
+      description: project.description,
+      type: "article",
+      url: `${baseUrl}/projects/${project.slug}`,
+      ...(project.coverImage ? { images: [{ url: project.coverImage }] } : {}),
+    },
+  };
 }
 
 export default async function ProjectDetailPage({ params }: { params: { slug: string } }) {
@@ -21,9 +33,14 @@ export default async function ProjectDetailPage({ params }: { params: { slug: st
 
   return (
     <div className="mx-auto max-w-3xl">
-      <Link href="/projects" className="mb-8 inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-gray-700">
-        <ArrowLeft size={16} /> 返回作品集
-      </Link>
+      {/* 面包屑：首页 > 作品集 > 项目名称 */}
+      <nav className="mb-6 flex items-center gap-1 text-sm text-gray-500">
+        <Link href="/" className="transition-colors hover:text-gray-700">首页</Link>
+        <ChevronRight size={14} className="text-gray-300" />
+        <Link href="/projects" className="transition-colors hover:text-gray-700">作品集</Link>
+        <ChevronRight size={14} className="text-gray-300" />
+        <span className="truncate text-gray-700">{project.title}</span>
+      </nav>
 
       <div className="mb-8">
         <h1 className="mb-3 text-3xl font-bold tracking-tight text-gray-900">{project.title}</h1>
@@ -75,6 +92,30 @@ export default async function ProjectDetailPage({ params }: { params: { slug: st
           </div>
         </div>
       )}
+
+      {/* 底部 CTA */}
+      <div className="mt-12 rounded-2xl bg-gradient-to-br from-brand-500 to-indigo-600 p-8 text-center text-white">
+        <h2 className="mb-3 text-2xl font-bold">对这个项目感兴趣？</h2>
+        <p className="mb-6 text-brand-100">欢迎联系我，了解更多细节或探讨合作机会。</p>
+        <Link
+          href="/contact"
+          className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-medium text-brand-600 transition-colors hover:bg-gray-100"
+        >
+          联系我
+        </Link>
+      </div>
+
+      {/* 返回作品集 */}
+      <div className="mt-8">
+        <Link
+          href="/projects"
+          className="inline-flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-gray-700"
+        >
+          <ArrowLeft size={16} /> 返回作品集
+        </Link>
+      </div>
+
+      <CodeHighlighter />
     </div>
   );
 }

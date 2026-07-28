@@ -1,10 +1,29 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import prisma from "@/lib/prisma";
+import { renderMarkdown } from "@/lib/markdown";
+import TimelineNode from "@/components/TimelineNode";
 
 export const metadata: Metadata = {
   title: "关于",
+  description: "了解我更多 — 个人介绍、技能与职业经历",
+  openGraph: {
+    title: "关于我",
+    description: "了解我更多 — 个人介绍、技能与职业经历",
+    type: "profile",
+  },
 };
+
+interface Experience {
+  company: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+  highlights: string[];
+  projectSlug?: string;
+  projectTitle?: string;
+}
 
 async function getProfile() {
   return prisma.profile.findFirst({
@@ -16,13 +35,21 @@ export default async function AboutPage() {
   const profile = await getProfile();
   if (!profile) return <div className="py-20 text-center text-gray-500">暂无信息</div>;
 
-  const experiences = Array.isArray(profile.resume?.experiences)
-    ? profile.resume!.experiences as Array<{
-        company: string; title: string; startDate: string; endDate: string; description: string; highlights: string[];
-      }>
+  const experiences: Experience[] = Array.isArray(profile.resume?.experiences)
+    ? (profile.resume!.experiences as unknown as Experience[])
     : [];
 
-  const years = [...new Set(experiences.map(exp => exp.startDate.split("-")[0]))].sort((a, b) => parseInt(b) - parseInt(a));
+  // 按时间倒序排序（先按 endDate 降序，再按 startDate 降序）
+  const sortedExperiences = [...experiences].sort((a, b) => {
+    const aEnd = a.endDate || "9999";
+    const bEnd = b.endDate || "9999";
+    if (aEnd !== bEnd) return bEnd.localeCompare(aEnd);
+    return (b.startDate || "").localeCompare(a.startDate || "");
+  });
+
+  const years = [...new Set(sortedExperiences.map((exp) => exp.startDate.split("-")[0]))].sort(
+    (a, b) => parseInt(b) - parseInt(a)
+  );
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -55,7 +82,12 @@ export default async function AboutPage() {
             <p className="text-gray-500">{profile.title}</p>
           </div>
 
-          <p className="leading-relaxed text-gray-600">{profile.bio}</p>
+          {/* 个人介绍：Markdown 渲染 */}
+          {profile.bio && (
+            <div className="leading-relaxed text-gray-600 [&_a]:text-brand-600 [&_a]:underline [&_h1]:mb-3 [&_h1]:mt-4 [&_h1]:text-xl [&_h1]:font-semibold [&_h2]:mb-2 [&_h2]:mt-3 [&_h2]:text-lg [&_h2]:font-medium [&_p]:my-2 [&_ul]:my-2 [&_ul]:ml-5 [&_ul]:list-disc [&_ul]:space-y-1">
+              {renderMarkdown(profile.bio)}
+            </div>
+          )}
 
           {/* Skills */}
           {profile.resume?.skills && Array.isArray(profile.resume.skills) && profile.resume.skills.length > 0 && (
@@ -85,7 +117,7 @@ export default async function AboutPage() {
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-lg border border-warm-200 px-4 py-2 text-sm text-gray-600 transition-colors hover:border-brand-200 hover:text-brand-600"
+                    className="inline-flex min-h-[44px] items-center rounded-lg border border-warm-200 px-4 py-2 text-sm text-gray-600 transition-colors hover:border-brand-200 hover:text-brand-600"
                   >
                     {link.platform}
                   </Link>
@@ -106,7 +138,7 @@ export default async function AboutPage() {
       </div>
 
       {/* Timeline */}
-      {experiences.length > 0 && (
+      {sortedExperiences.length > 0 && (
         <section className="mt-16">
           <h2 className="mb-8 text-xl font-semibold text-gray-900">职业时间线</h2>
           <div className="relative">
@@ -120,27 +152,10 @@ export default async function AboutPage() {
                   <span className="ml-4 text-lg font-semibold text-gray-900">{year}年</span>
                 </div>
                 <div className="ml-16 space-y-4">
-                  {experiences
+                  {sortedExperiences
                     .filter((exp) => exp.startDate.startsWith(year))
                     .map((exp, idx) => (
-                      <div
-                        key={idx}
-                        className="group rounded-lg border border-gray-100 bg-white p-4 transition-all hover:border-brand-200 hover:shadow-md"
-                      >
-                        <div className="mb-1 flex items-baseline justify-between">
-                          <h3 className="font-medium text-gray-900">{exp.title}</h3>
-                          <span className="text-xs text-gray-400">{exp.startDate} - {exp.endDate}</span>
-                        </div>
-                        <p className="mb-2 text-sm font-medium text-gray-500">{exp.company}</p>
-                        <p className="text-sm text-gray-600">{exp.description}</p>
-                        {exp.highlights && exp.highlights.length > 0 && (
-                          <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-gray-500">
-                            {exp.highlights.map((h, j) => (
-                              <li key={j}>{h}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
+                      <TimelineNode key={idx} experience={exp} index={idx} />
                     ))}
                 </div>
               </div>

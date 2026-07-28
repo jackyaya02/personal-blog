@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 
 export async function GET() {
   const [posts, projects] = await Promise.all([
-    prisma.post.findMany({ where: { status: "PUBLISHED" }, select: { slug: true, updatedAt: true } }),
+    prisma.post.findMany({ where: { status: { in: ["PUBLISHED", "PINNED"] } }, select: { slug: true, updatedAt: true } }),
     prisma.project.findMany({ where: { status: "PUBLISHED" }, select: { slug: true, updatedAt: true } }),
   ]);
 

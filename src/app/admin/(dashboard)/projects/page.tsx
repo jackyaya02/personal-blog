@@ -91,6 +91,7 @@ export default async function AdminProjectsPage({
           <table className="w-full">
             <thead className="border-b border-warm-200 bg-warm-50">
               <tr>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 w-16">ID</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">标题</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">角色</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">状态</th>
@@ -102,6 +103,7 @@ export default async function AdminProjectsPage({
             <tbody className="divide-y divide-warm-100">
               {projects.map((project) => (
                 <tr key={project.id} className="hover:bg-warm-50">
+                  <td className="px-4 py-3 text-sm text-gray-400 font-mono">{project.id}</td>
                   <td className="px-4 py-3">
                     <Link
                       href={`/admin/projects/${project.id}`}
