@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import Pagination from "@/components/Pagination";
 import SearchBox from "@/components/SearchBox";
 import PostCard from "@/components/PostCard";
+import { PostListSkeleton } from "@/components/Skeleton";
 import type { Prisma } from "@prisma/client";
 
 export const metadata: Metadata = {
@@ -157,17 +158,15 @@ export default async function LifePage({
                 <PostCard key={post.id} post={post} />
               ))}
             </div>
-          ) : (
+          ) : q || tag ? (
             <div className="py-20 text-center">
-              <p className="text-gray-400">
-                {q || tag ? "未找到匹配的文章" : "暂无生活文章"}
-              </p>
-              {(q || tag) && (
-                <Link href="/life" className="mt-3 inline-block text-sm text-brand-600 hover:underline">
-                  查看全部
-                </Link>
-              )}
+              <p className="text-gray-400">未找到匹配的文章</p>
+              <Link href="/life" className="mt-3 inline-block text-sm text-brand-600 hover:underline">
+                查看全部
+              </Link>
             </div>
+          ) : (
+            <PostListSkeleton count={3} />
           )}
 
           {/* 分页 */}

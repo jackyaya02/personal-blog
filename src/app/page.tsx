@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import prisma from "@/lib/prisma";
 import FadeIn from "@/components/FadeIn";
+import { HomePostSkeleton, ProjectCardSkeleton } from "@/components/Skeleton";
 
 export const metadata: Metadata = {
   title: "yaya — AI 产品经理",
@@ -133,23 +134,23 @@ export default async function HomePage() {
           style={{ animationDelay: "-6s" }}
         />
 
-        <div className="container-main grid items-center gap-12 pb-20 pt-16 lg:grid-cols-12 lg:gap-16 lg:pb-28 lg:pt-24">
+        <div className="container-main flex flex-col gap-8 pb-16 pt-12 lg:flex-row lg:items-center lg:gap-16 lg:pb-28 lg:pt-24">
           {/* 左侧：文字介绍 */}
-          <div className="lg:col-span-7">
+          <div className="w-full lg:flex-1 lg:basis-7/12">
             <p className="eyebrow animate-fade-in">AI 产品经理 · 24 岁</p>
-            <h1 className="animate-fade-up font-serif text-6xl font-semibold leading-[1.05] tracking-tight text-gray-900 sm:text-7xl lg:text-8xl">
+            <h1 className="animate-fade-up font-serif text-5xl font-semibold leading-[1.05] tracking-tight text-gray-900 sm:text-7xl lg:text-8xl">
               <span className="text-gradient-rose">yaya</span>
             </h1>
-            <p className="mt-6 max-w-xl animate-fade-up font-serif text-2xl italic leading-relaxed text-gray-700 sm:text-3xl" style={{ animationDelay: "0.15s" }}>
+            <p className="mt-5 max-w-xl animate-fade-up font-serif text-xl italic leading-relaxed text-gray-700 sm:mt-6 sm:text-3xl" style={{ animationDelay: "0.15s" }}>
               在智能与人之间，<br className="hidden sm:block" />
               设计有温度的 AI 产品。
             </p>
-            <p className="mt-5 max-w-xl animate-fade-up text-base leading-relaxed text-gray-600" style={{ animationDelay: "0.3s" }}>
+            <p className="mt-4 max-w-xl animate-fade-up text-sm leading-relaxed text-gray-600 sm:mt-5 sm:text-base" style={{ animationDelay: "0.3s" }}>
               我相信优秀的 AI 产品，不仅需要智能，<br className="hidden sm:block" />
               也需要理解人的情绪、需求和创造力。
             </p>
 
-            <div className="mt-10 flex animate-fade-up flex-wrap gap-4" style={{ animationDelay: "0.45s" }}>
+            <div className="mt-8 flex animate-fade-up flex-wrap gap-3 sm:mt-10 sm:gap-4" style={{ animationDelay: "0.45s" }}>
               <Link href="/projects" className="btn-primary">
                 查看我的作品
                 <span aria-hidden>→</span>
@@ -160,9 +161,9 @@ export default async function HomePage() {
             </div>
 
             {/* 小标签：职业方向 */}
-            <div className="mt-12 flex animate-fade-up flex-wrap gap-3" style={{ animationDelay: "0.6s" }}>
+            <div className="mt-8 flex animate-fade-up flex-wrap gap-2 sm:mt-12 sm:gap-3" style={{ animationDelay: "0.6s" }}>
               {["AI 产品设计", "用户体验", "智能产品创新"].map((t) => (
-                <span key={t} className="rounded-full border border-cream-300 bg-white/60 px-4 py-1.5 text-xs font-medium text-gray-600 backdrop-blur-sm">
+                <span key={t} className="rounded-full border border-cream-300 bg-white/60 px-3 py-1 text-[11px] font-medium text-gray-600 backdrop-blur-sm sm:px-4 sm:py-1.5 sm:text-xs">
                   {t}
                 </span>
               ))}
@@ -170,8 +171,8 @@ export default async function HomePage() {
           </div>
 
           {/* 右侧：人物头像 / 杂志封面感 */}
-          <div className="lg:col-span-5">
-            <div className="relative mx-auto max-w-sm animate-fade-in" style={{ animationDelay: "0.3s" }}>
+          <div className="w-full lg:basis-5/12 lg:shrink-0">
+            <div className="relative mx-auto max-w-[16rem] animate-fade-in sm:max-w-xs lg:max-w-sm" style={{ animationDelay: "0.3s" }}>
               {/* 装饰边框 */}
               <div className="absolute -inset-3 -z-10 rounded-[2rem] bg-gradient-to-br from-brand-200/50 via-mist-200/40 to-cream-300/40 blur-xl" />
               <div className="absolute -inset-1 -z-10 rounded-[1.8rem] bg-gradient-to-br from-brand-300/60 to-mist-300/50" />
@@ -180,13 +181,13 @@ export default async function HomePage() {
                 <img
                   src={profile?.avatar || HERO_PORTRAIT}
                   alt={name}
-                  className="aspect-[4/5] h-full w-full object-cover"
+                  className="aspect-[4/5] h-full w-full object-cover font-thin"
                 />
               </div>
               {/* 角标：杂志感 */}
-              <div className="absolute -bottom-4 -left-4 rounded-2xl bg-white/90 px-4 py-3 shadow-soft backdrop-blur-sm">
-                <p className="font-serif text-sm font-semibold text-gray-900">{title}</p>
-                <p className="text-xs text-brand-500">个人作品集 · 2026</p>
+              <div className="absolute -bottom-3 -left-3 rounded-xl bg-white/90 px-3 py-2 shadow-soft backdrop-blur-sm">
+                <p className="font-serif text-xs font-semibold text-gray-900 sm:text-sm">{title}</p>
+                <p className="text-[10px] text-brand-500 sm:text-xs">个人作品集 · 2026</p>
               </div>
             </div>
           </div>
@@ -194,9 +195,9 @@ export default async function HomePage() {
       </section>
 
       {/* ============ 我的旅程 ============ */}
-      <section className="container-main py-24">
+      <section className="container-main py-16 sm:py-24">
         <FadeIn>
-          <div className="mb-16 text-center">
+          <div className="mb-12 text-center sm:mb-16">
             <p className="eyebrow">我的旅程</p>
             <h2 className="section-title">成长之路</h2>
             <p className="mx-auto mt-4 max-w-xl text-gray-500">成长 · 探索 · 创造</p>
@@ -204,25 +205,30 @@ export default async function HomePage() {
         </FadeIn>
 
         <div className="relative mx-auto max-w-4xl">
-          {/* 中线 */}
-          <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-gradient-to-b from-brand-200 via-mist-200 to-transparent" />
+          {/* 中线：移动端靠左，桌面端居中 */}
+          <div className="absolute left-4 top-0 h-full w-px bg-gradient-to-b from-brand-200 via-mist-200 to-transparent sm:left-1/2 sm:-translate-x-1/2" />
 
-          <div className="space-y-16">
-            {JOURNEY.map((item, i) => (
-              <FadeIn key={item.year} delay={i * 100}>
-                <div className={`relative flex items-center gap-8 ${i % 2 === 1 ? "flex-row-reverse" : ""}`}>
-                  {/* 节点圆点 */}
-                  <div className="absolute left-1/2 z-10 h-4 w-4 -translate-x-1/2 rounded-full border-4 border-cream-50 bg-brand-400 shadow-rose-soft" />
-                  {/* 文字卡片 */}
-                  <div className="w-1/2" />
-                  <div className={`w-1/2 ${i % 2 === 1 ? "pr-12 text-right" : "pl-12"}`}>
-                    <p className="font-serif text-4xl font-semibold text-brand-400">{item.year}</p>
-                    <h3 className="mt-2 text-lg font-semibold text-gray-900">{item.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-gray-600">{item.desc}</p>
+          <div className="space-y-10 sm:space-y-16">
+            {JOURNEY.map((item, i) => {
+              const isOdd = i % 2 === 1;
+              return (
+                <FadeIn key={item.year} delay={i * 100}>
+                  {/* 移动端：单列纵向（文字在右）；桌面端：左右交替 */}
+                  <div className={`relative flex items-center sm:gap-8 ${isOdd ? "sm:flex-row-reverse" : ""}`}>
+                    {/* 节点圆点：移动端 left-4，桌面端居中 */}
+                    <div className="absolute left-4 z-10 h-4 w-4 -translate-x-1/2 rounded-full border-4 border-cream-50 bg-brand-400 shadow-rose-soft sm:left-1/2" />
+                    {/* 占位（桌面端用，移动端隐藏） */}
+                    <div className="hidden w-1/2 sm:block" />
+                    {/* 文字卡片 */}
+                    <div className={`ml-10 w-full sm:ml-0 sm:w-1/2 ${isOdd ? "sm:pr-12 sm:text-right" : "sm:pl-12 sm:text-left"}`}>
+                      <p className="font-serif text-3xl font-semibold text-brand-400 sm:text-4xl">{item.year}</p>
+                      <h3 className="mt-2 text-base font-semibold text-gray-900 sm:text-lg">{item.title}</h3>
+                      <p className="mt-2 text-sm leading-relaxed text-gray-600">{item.desc}</p>
+                    </div>
                   </div>
-                </div>
-              </FadeIn>
-            ))}
+                </FadeIn>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -285,9 +291,10 @@ export default async function HomePage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-cream-300 bg-white/50 p-16 text-center">
-              <p className="font-serif text-2xl text-gray-400">敬请期待</p>
-              <p className="mt-2 text-sm text-gray-400">作品案例正在整理中</p>
+            <div className="grid gap-10 lg:grid-cols-2">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <ProjectCardSkeleton key={i} variant="featured" />
+              ))}
             </div>
           )}
 
@@ -340,9 +347,10 @@ export default async function HomePage() {
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-cream-300 bg-white/50 p-16 text-center">
-            <p className="font-serif text-2xl text-gray-400">还没有文章</p>
-            <p className="mt-2 text-sm text-gray-400">思考还在路上</p>
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <HomePostSkeleton key={i} />
+            ))}
           </div>
         )}
 

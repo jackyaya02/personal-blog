@@ -1,17 +1,17 @@
- // ============================================================
- // 数据库 Schema - 个人博客网站
- // ORM: Prisma 4.x
- // 数据库: MySQL 8.x (开发) / PlanetScale (生产)
- // ============================================================
- 
- generator client {
-   provider = "prisma-client-js"
- }
- 
- datasource db {
-   provider = "mysql"
-   url      = env("DATABASE_URL")
- }
+// ============================================================
+// 数据库 Schema - 个人博客网站
+// ORM: Prisma 7.x (adapter 模式)
+// 数据库: Supabase (PostgreSQL)
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
  
  // --------------------------------------------------
  // 个人信息
@@ -91,7 +91,7 @@
    id         Int      @id @default(autoincrement())
    title      String   @db.VarChar(200)
    slug       String   @unique @db.VarChar(200)
-   content    String   @db.MediumText
+   content    String   @db.Text
    excerpt    String?  @db.VarChar(500)
    coverImage String?  @db.VarChar(500)
    status     PostStatus @default(DRAFT)
@@ -133,7 +133,7 @@
    title       String       @db.VarChar(200)
    slug        String       @unique @db.VarChar(200)
    description String       @db.Text
-   content     String       @db.MediumText
+   content     String       @db.Text
    role        String?      @db.VarChar(100)
    duration    String?      @db.VarChar(100)
    url         String?      @db.VarChar(500)

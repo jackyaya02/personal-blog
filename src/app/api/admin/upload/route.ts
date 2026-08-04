@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { put } from "@vercel/blob";
 import { randomBytes } from "crypto";
+import { supabaseAdmin } from "@/lib/supabase";
 
 // 允许的图片 MIME 类型
 const ALLOWED_MIME_TYPES = [
@@ -21,12 +21,15 @@ const MIME_TO_EXT: Record<string, string> = {
 // 最大文件大小：5MB
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
+// Supabase Storage bucket 名称
+const BUCKET_NAME = "uploads";
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
 
-    // 校验文件存在且是文件类型（FormDataEntryValue = string | File）
+    // 校验文件存在且是文件类型
     if (!file || typeof file === "string") {
       return NextResponse.json(
         { code: 40201, data: null, message: "未接收到文件" },
@@ -64,16 +67,35 @@ export async function POST(request: Request) {
     const random = randomBytes(6).toString("hex");
     const filename = `${timestamp}-${random}.${ext}`;
 
-    // 上传到 Vercel Blob（兼容本地开发与服务端环境）
-    const blob = await put(filename, file, {
-      access: "public",
-      contentType: file.type,
-    });
+    // 上传到 Supabase Storage（upsert 避免重名冲突）
+    const arrayBuffer = await file.arrayBuffer();
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .upload(filename, arrayBuffer, {
+        contentType: file.type,
+        upsert: false,
+      });
 
-    // 返回可访问的 URL（Vercel Blob 返回完整 CDN URL）
+    if (uploadError) {
+      console.error("Supabase 上传失败:", uploadError);
+      return NextResponse.json(
+        { code: 50002, data: null, message: "图片上传失败" },
+        { status: 500 }
+      );
+    }
+
+    // 获取公开访问 URL
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(filename);
+
     return NextResponse.json({
       code: 0,
-      data: { url: blob.url, filename, pathname: blob.pathname },
+      data: {
+        url: publicUrlData.publicUrl,
+        filename,
+        pathname: filename,
+      },
       message: "success",
     });
   } catch (error) {

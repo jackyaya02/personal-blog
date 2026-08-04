@@ -8,10 +8,13 @@
         "postinstall": "prisma generate",
         "start": "next start",
         "lint": "eslint",
-        "seed": "npx prisma db seed"
+        "seed": "npx prisma db seed",
+        "check": "node scripts/preflight.mjs"
     },
     "dependencies": {
-        "@prisma/client": "^4.16.2",
+        "@prisma/adapter-pg": "^7.9.1",
+        "@prisma/client": "^7.9.1",
+        "@supabase/supabase-js": "^2.111.0",
         "@types/jsonwebtoken": "^9.0.10",
         "@vercel/blob": "^2.6.1",
         "autoprefixer": "^10.5.4",
@@ -20,17 +23,19 @@
         "jsonwebtoken": "^9.0.3",
         "lucide-react": "^1.24.0",
         "next": "^14.2.35",
+        "pg": "^8.22.0",
         "postcss": "^8.5.19",
-        "prisma": "^4.16.2",
         "react": "^18.3.1",
         "react-dom": "^18.3.1"
     },
     "devDependencies": {
         "@types/node": "^20",
+        "@types/pg": "^8.20.0",
         "@types/react": "^18",
         "@types/react-dom": "^18",
         "eslint": "^8.57.1",
         "eslint-config-next": "^14.2.35",
+        "prisma": "^7.9.1",
         "tailwindcss": "^3.4.19",
         "ts-node": "^10.9.2",
         "typescript": "^5"
