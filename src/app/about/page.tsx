@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { renderMarkdown } from "@/lib/markdown";
 import TimelineNode from "@/components/TimelineNode";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "关于",
   description: "了解我更多 — 个人介绍、技能与职业经历",

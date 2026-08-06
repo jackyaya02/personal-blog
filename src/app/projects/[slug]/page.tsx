@@ -6,6 +6,8 @@ import { renderMarkdown } from "@/lib/markdown";
 import { ArrowLeft, ChevronRight, ExternalLink } from "lucide-react";
 import CodeHighlighter from "@/components/CodeHighlighter";
 
+export const dynamic = "force-dynamic";
+
 async function getProject(slug: string) {
   return prisma.project.findFirst({ where: { slug, status: "PUBLISHED" } });
 }

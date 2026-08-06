@@ -6,6 +6,8 @@ import { renderMarkdown } from "@/lib/markdown";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import CodeHighlighter from "@/components/CodeHighlighter";
 
+export const dynamic = "force-dynamic";
+
 async function getPost(slug: string) {
   return prisma.post.findFirst({
     where: { slug, status: { in: ["PUBLISHED", "PINNED"] } },

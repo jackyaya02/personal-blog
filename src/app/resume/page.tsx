@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import prisma from "@/lib/prisma";
 import PdfDownloadButton from "@/components/PdfDownloadButton";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "简历",
   description: "工作经历、教育背景与技能",

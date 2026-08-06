@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { ArrowLeft } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const tag = await prisma.tag.findUnique({ where: { slug: params.slug } });
   if (!tag) return { title: "未找到" };

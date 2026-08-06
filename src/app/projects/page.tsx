@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import prisma from "@/lib/prisma";
 import { ProjectCardSkeleton } from "@/components/Skeleton";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "作品",
   description: "我的产品设计作品集",

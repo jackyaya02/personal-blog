@@ -7,6 +7,8 @@ import PostCard from "@/components/PostCard";
 import { PostListSkeleton } from "@/components/Skeleton";
 import type { Prisma } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "博客",
   description: "AI 产品、用户体验、产品方法论",

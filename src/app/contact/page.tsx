@@ -5,6 +5,8 @@ import { Mail, Globe, MessageSquare } from "lucide-react";
 import { GithubIcon, TwitterIcon, LinkedinIcon } from "@/components/BrandIcons";
 import ContactForm from "@/components/ContactForm";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "联系",
   description: "通过邮箱或社交平台联系我，或在线留言",
