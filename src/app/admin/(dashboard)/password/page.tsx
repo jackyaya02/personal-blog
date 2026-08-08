@@ -39,6 +39,7 @@ export default function PasswordPage() {
       const res = await fetch("/api/admin/password", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ currentPassword, newPassword }),
       });
       const data = await res.json();

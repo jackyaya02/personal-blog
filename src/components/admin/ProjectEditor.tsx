@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import ImageUploader from "./ImageUploader";
 import MultiImageUploader from "./MultiImageUploader";
+import { renderMarkdown } from "@/lib/markdown";
 
 interface ProjectData {
   id?: number;
@@ -43,6 +44,9 @@ export default function ProjectEditor({ project }: { project?: ProjectData }) {
   const [order, setOrder] = useState(project?.order ?? 0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Markdown real-time preview
+  const preview = useMemo(() => renderMarkdown(content), [content]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -200,16 +204,36 @@ export default function ProjectEditor({ project }: { project?: ProjectData }) {
             />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">详细内容 *</label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
-              rows={14}
-              className="w-full rounded-lg border border-warm-200 px-3 py-2 font-mono text-sm outline-none focus:border-brand-300 focus:ring-1 focus:ring-brand-200"
-              placeholder="支持 Markdown 语法..."
-            />
+          <div className="mb-6 grid gap-6 lg:grid-cols-2">
+            {/* 左侧：编辑 */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">详细内容 * (Markdown)</label>
+                <span className="text-xs text-gray-400">{content.length} 字符</span>
+              </div>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                required
+                rows={22}
+                className="w-full rounded-lg border border-warm-200 px-3 py-2 font-mono text-sm outline-none focus:border-brand-300 focus:ring-1 focus:ring-brand-200"
+                placeholder="支持 Markdown 语法..."
+              />
+            </div>
+            {/* 右侧：预览 */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-sm font-medium text-gray-700">实时预览</label>
+                <span className="text-xs text-gray-400">与前台展示效果一致</span>
+              </div>
+              <div className="rounded-lg border border-warm-100 bg-white p-4">
+                {preview.length > 0 ? (
+                  preview
+                ) : (
+                  <p className="text-sm text-gray-300">在左侧输入 Markdown 内容，预览将实时显示...</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

@@ -24,7 +24,7 @@ export async function PUT(request: Request) {
     }
 
     // 从 cookie 获取用户 id
-    const token = cookies().get("token")?.value;
+    const token = cookies().get("admin_token")?.value;
     if (!token) {
       return NextResponse.json(
         { code: 40101, data: null, message: "未登录" },
@@ -34,11 +34,12 @@ export async function PUT(request: Request) {
 
     // 用 jose 验证 token（在 middleware 里已经验证过，这里直接信任 middleware 保护）
     // 但本路由是受保护路由，token 已合法，我们用 jsonwebtoken 解析
-    const jwt = await import("jsonwebtoken");
+    const { jwtVerify } = await import("jose");
     const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
     let payload: { id: number; username: string };
     try {
-      payload = jwt.verify(token, JWT_SECRET) as { id: number; username: string };
+      const { payload: p } = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
+      payload = p as unknown as { id: number; username: string };
     } catch {
       return NextResponse.json(
         { code: 40102, data: null, message: "登录已过期，请重新登录" },

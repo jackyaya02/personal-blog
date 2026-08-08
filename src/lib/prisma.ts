@@ -18,7 +18,9 @@ function createPrismaClient() {
     // Supabase Supavisor 需要 SSL（自签名证书，跳过验证）
     ssl: { rejectUnauthorized: false },
     // 限制连接数（Supabase 免费版限制）
-    max: 3,
+    max: 1,
+    connectionTimeoutMillis: 10000,
+    idleTimeoutMillis: 10000,
   });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({

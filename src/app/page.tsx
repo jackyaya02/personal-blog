@@ -16,57 +16,48 @@ export const metadata: Metadata = {
   },
 };
 
-// Hero 肖像 & Creative Corner 生活图（text_to_image API）
-const HERO_PORTRAIT =
-  "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=" +
-  encodeURIComponent(
-    "Editorial portrait of a young Asian woman with soft natural light, warm cream tones, film photography aesthetic, minimalist beige background, lifestyle magazine style, calm thoughtful expression, wearing neutral knit sweater, gentle and creative mood"
-  ) +
-  "&image_size=portrait_4_3";
-
-const CREATIVE_IMAGES = {
-  reading:
-    "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=" +
-    encodeURIComponent(
-      "Stack of design books on wooden table with soft natural light, warm cream tones, minimalist lifestyle photography, cozy reading nook, film aesthetic"
-    ) +
-    "&image_size=landscape_4_3",
-  photography:
-    "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=" +
-    encodeURIComponent(
-      "Vintage film camera on wooden desk with notebook and coffee cup, warm natural light, editorial lifestyle photography, cream and beige tones"
-    ) +
-    "&image_size=landscape_4_3",
-  inspiration:
-    "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=" +
-    encodeURIComponent(
-      "Open notebook with hand sketches and pressed flowers, warm cream tones, soft natural light, creative workspace, minimalist editorial"
-    ) +
-    "&image_size=landscape_4_3",
-  design:
-    "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=" +
-    encodeURIComponent(
-      "Minimalist workspace with potted plant and design tools, warm morning light, editorial lifestyle photography, cream and soft pink tones"
-    ) +
-    "&image_size=landscape_4_3",
-};
-
 async function getHomeData() {
-  const [profile, latestPosts, featuredProjects] = await Promise.all([
+  // One-time migration: ensure no posts in "生活" category (they belong in "笔记")
+  // NOTE: Prisma 7 adapter has a bug where category.slug filter works in findMany but not count/updateMany
+  const allCats = await prisma.category.findMany();
+  const blogCat = allCats.find(c => c.slug === "blog");
+  console.log("[MIGRATE] allCats:", allCats.length, "blogCat:", !!blogCat);
+  if (blogCat) {
+    const lifePostsToFix = await prisma.post.findMany({
+      where: { category: { slug: "life" } },
+      include: { category: true },
+    });
+    console.log("[MIGRATE] lifePostsToFix:", lifePostsToFix.length);
+    if (lifePostsToFix.length > 0) {
+      const result = await prisma.post.updateMany({
+        where: { id: { in: lifePostsToFix.map(p => p.id) } },
+        data: { categoryId: blogCat.id },
+      });
+      console.log("[MIGRATE] Updated:", result.count, "posts from life to blog");
+    }
+  }
+
+  const [profile, latestPosts, featuredProjects, lifePosts] = await Promise.all([
     prisma.profile.findFirst({ include: { socialLinks: true } }),
     prisma.post.findMany({
-      where: { status: { in: ["PUBLISHED", "PINNED"] } },
+      where: { status: { in: ["PUBLISHED", "PINNED"] }, category: { slug: { not: "life" } } },
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
       include: { category: true, postTags: { include: { tag: true } } },
       take: 3,
     }),
+    prisma.post.findMany({
+      where: { status: { in: ["PUBLISHED", "PINNED"] }, category: { slug: "life" } },
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      include: { category: true, postTags: { include: { tag: true } } },
+      take: 4,
+    }),
     prisma.project.findMany({
-      where: { status: "PUBLISHED", featured: true },
       orderBy: { order: "asc" },
-      take: 2,
     }),
   ]);
-  return { profile, latestPosts, featuredProjects };
+  // Filter featured projects in JS (workaround for Prisma/Supabase where clause issue)
+  const filteredProjects = featuredProjects.filter(p => p.status === "PUBLISHED" && p.featured === true).slice(0, 2);
+  return { profile, latestPosts, featuredProjects: filteredProjects, lifePosts };
 }
 
 // 「我的旅程」时间线数据
@@ -88,36 +79,16 @@ const JOURNEY = [
   },
 ];
 
-// Creative Corner 兴趣模块（key 对应 Tag slug，点击跳转到 /blog/tag/[slug]）
-const CREATIVE_CORNERS = [
-  {
-    key: "reading",
-    title: "阅读",
-    desc: "设计、产品、心理学、文学——阅读是我理解世界的方式。",
-    image: CREATIVE_IMAGES.reading,
-  },
-  {
-    key: "photography",
-    title: "摄影",
-    desc: "用胶片记录生活的光与影，捕捉被忽略的日常之美。",
-    image: CREATIVE_IMAGES.photography,
-  },
-  {
-    key: "inspiration",
-    title: "灵感收藏",
-    desc: "收集那些让我心动的瞬间：一句诗、一个色彩、一段对话。",
-    image: CREATIVE_IMAGES.inspiration,
-  },
-  {
-    key: "design-observation",
-    title: "设计观察",
-    desc: "观察身边的产品如何与人对话，记录好的与值得改进的细节。",
-    image: CREATIVE_IMAGES.design,
-  },
-];
-
 export default async function HomePage() {
-  const { profile, latestPosts, featuredProjects } = await getHomeData();
+  const data = await getHomeData();
+  const { profile, latestPosts, lifePosts } = data;
+  let featuredProjects = data.featuredProjects;
+
+  // Filter featured projects in JS (workaround for Prisma/Supabase where clause issue)
+  if (featuredProjects.length === 0) {
+    const allProjects = await prisma.project.findMany({ orderBy: { order: "asc" } });
+    featuredProjects = allProjects.filter(p => p.status === "PUBLISHED" && p.featured === true).slice(0, 2);
+  }
   const name = profile?.name || "yaya";
   const title = profile?.title || "AI 产品经理";
 
@@ -136,10 +107,9 @@ export default async function HomePage() {
           style={{ animationDelay: "-6s" }}
         />
 
-        <div className="container-main flex flex-col gap-8 pb-16 pt-12 lg:flex-row lg:items-center lg:gap-16 lg:pb-28 lg:pt-24">
+        <div className="container-main flex flex-row items-center gap-4 pb-16 pt-12 lg:gap-16 lg:pb-28 lg:pt-24">
           {/* 左侧：文字介绍 */}
-          <div className="w-full lg:flex-1 lg:basis-7/12">
-            <p className="eyebrow animate-fade-in">AI 产品经理 · 24 岁</p>
+          <div className="flex-1 lg:basis-7/12">
             <h1 className="animate-fade-up font-serif text-5xl font-semibold leading-[1.05] tracking-tight text-gray-900 sm:text-7xl lg:text-8xl">
               <span className="text-gradient-rose">yaya</span>
             </h1>
@@ -173,18 +143,24 @@ export default async function HomePage() {
           </div>
 
           {/* 右侧：人物头像 / 杂志封面感 */}
-          <div className="w-full lg:basis-5/12 lg:shrink-0">
-            <div className="relative mx-auto max-w-[16rem] animate-fade-in sm:max-w-xs lg:max-w-sm" style={{ animationDelay: "0.3s" }}>
+          <div className="w-[7rem] shrink-0 sm:w-[10rem] lg:basis-5/12">
+            <div className="relative mx-auto animate-fade-in lg:max-w-sm" style={{ animationDelay: "0.3s" }}>
               {/* 装饰边框 */}
               <div className="absolute -inset-3 -z-10 rounded-[2rem] bg-gradient-to-br from-brand-200/50 via-mist-200/40 to-cream-300/40 blur-xl" />
               <div className="absolute -inset-1 -z-10 rounded-[1.8rem] bg-gradient-to-br from-brand-300/60 to-mist-300/50" />
-              <div className="overflow-hidden rounded-[1.6rem] bg-cream-100 shadow-rose">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={profile?.avatar || HERO_PORTRAIT}
-                  alt={name}
-                  className="aspect-[4/5] h-full w-full object-cover font-thin"
-                />
+              <div className="overflow-hidden rounded-[1.6rem] bg-gradient-to-br from-brand-100 via-cream-100 to-mist-100 shadow-rose">
+                {profile?.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={profile.avatar}
+                    alt={name}
+                    className="aspect-[4/5] h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex aspect-[4/5] h-full w-full items-center justify-center font-serif text-7xl font-semibold text-brand-300">
+                    {name.charAt(0)}
+                  </div>
+                )}
               </div>
               {/* 角标：杂志感 */}
               <div className="absolute -bottom-3 -left-3 rounded-xl bg-white/90 px-3 py-2 shadow-soft backdrop-blur-sm">
@@ -307,13 +283,13 @@ export default async function HomePage() {
       </section>
 
       {/* ============ 最新文章 ============ */}
-      <section className="container-main py-24">
+      <section className="container-main py-16">
         <FadeIn>
           <div className="mb-16 flex items-end justify-between">
             <div>
               <p className="eyebrow">最新文章</p>
               <h2 className="section-title">个人专栏</h2>
-              <p className="mt-3 text-sm text-gray-500">AI · 产品 · 设计 · 生活</p>
+              <p className="mt-3 text-sm text-gray-500">AI · 产品 · 设计</p>
             </div>
             <Link href="/blog" className="hidden text-sm font-medium text-brand-600 transition-colors hover:text-brand-700 sm:block">
               全部文章 →
@@ -361,7 +337,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ============ 兴趣角落 ============ */}
+          {/* ============ 兴趣角落（生活文章） ============ */}
       <section className="border-y border-cream-200 bg-cream-100/40 py-24">
         <div className="container-main">
           <FadeIn>
@@ -374,28 +350,60 @@ export default async function HomePage() {
             </div>
           </FadeIn>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {CREATIVE_CORNERS.map((item, i) => (
-              <FadeIn key={item.key} delay={i * 80}>
-                <Link href={`/life?tag=${item.key}`} className="group block h-full">
-                  <article className="h-full overflow-hidden rounded-2xl bg-white shadow-soft transition-all duration-400 ease-soft hover:-translate-y-1 hover:shadow-soft-hover">
-                    <div className="aspect-[4/3] overflow-hidden bg-cream-100">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="h-full w-full object-cover transition-transform duration-600 ease-soft group-hover:scale-105"
-                      />
+          {false ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {lifePosts.map((post, i) => (
+                <FadeIn key={post.id} delay={i * 80}>
+                  <Link href={`/blog/${post.slug}`} className="group block h-full">
+                    <article className="h-full overflow-hidden rounded-2xl bg-white shadow-soft transition-all duration-400 ease-soft hover:-translate-y-1 hover:shadow-soft-hover">
+                      <div className="aspect-[4/3] overflow-hidden bg-cream-100">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        {post.coverImage ? (
+                          <img
+                            src={post.coverImage}
+                            alt={post.title}
+                            className="h-full w-full object-cover transition-transform duration-600 ease-soft group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center font-serif text-4xl font-semibold text-brand-300">
+                            {post.title.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-5">
+                        <p className="font-serif text-lg font-semibold text-gray-900 transition-colors group-hover:text-brand-600">{post.title}</p>
+                        {post.excerpt && (
+                          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-gray-500">{post.excerpt}</p>
+                        )}
+                        <p className="mt-3 text-xs font-medium text-brand-500 transition-colors group-hover:text-brand-600">查看文章 →</p>
+                      </div>
+                    </article>
+                  </Link>
+                </FadeIn>
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-full overflow-hidden rounded-2xl bg-white shadow-soft">
+                  <div className="aspect-[4/3] animate-pulse bg-cream-200" />
+                  <div className="space-y-3 p-5">
+                    <div className="h-5 w-3/4 animate-pulse rounded bg-cream-200" />
+                    <div className="space-y-2">
+                      <div className="h-3 w-full animate-pulse rounded bg-cream-100" />
+                      <div className="h-3 w-2/3 animate-pulse rounded bg-cream-100" />
                     </div>
-                    <div className="p-5">
-                      <p className="font-serif text-lg font-semibold text-gray-900 transition-colors group-hover:text-brand-600">{item.title}</p>
-                      <p className="mt-2 text-xs leading-relaxed text-gray-500">{item.desc}</p>
-                      <p className="mt-3 text-xs font-medium text-brand-500 transition-colors group-hover:text-brand-600">查看文章 →</p>
-                    </div>
-                  </article>
-                </Link>
-              </FadeIn>
-            ))}
+                    <div className="h-3 w-16 animate-pulse rounded bg-cream-200" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-10 text-center">
+            <Link href="/life" className="btn-secondary">
+              查看更多生活随笔 →
+            </Link>
           </div>
         </div>
       </section>
@@ -403,20 +411,12 @@ export default async function HomePage() {
       {/* ============ 联系我 CTA ============ */}
       <FadeIn>
         <section className="container-main py-24">
-          <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-100 via-cream-100 to-mist-100 p-12 text-center sm:p-16">
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-brand-200/50 blur-3xl"
-            />
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -bottom-10 -left-10 h-48 w-48 rounded-full bg-mist-200/50 blur-3xl"
-            />
+          <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-100 via-cream-100 to-mist-100 p-8 text-center sm:p-10">
+
+
             <div className="relative">
               <p className="eyebrow">保持联系</p>
-              <h2 className="mx-auto mb-4 max-w-2xl font-serif text-3xl font-semibold leading-snug text-gray-900 sm:text-4xl">
-                想聊聊 AI、产品，<br className="sm:hidden" />或生活的美好？
-              </h2>
+
               <p className="mx-auto mb-8 max-w-xl text-base leading-relaxed text-gray-600">
                 无论是合作机会、产品讨论，还是想分享一本好书——
                 <br className="hidden sm:block" />
