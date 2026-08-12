@@ -6,6 +6,13 @@ import Link from "next/link";
  * 支持：标题(h1-h3)、无序列表、有序列表、引用块、代码块(带语言标识)、
  *       表格(GFM)、段落、粗体、斜体、链接、图片、行内代码
  */
+
+/** 目录项类型：用于 TableOfContents 组件 */
+export interface HeadingItem {
+  id: string;
+  level: number;
+  text: string;
+}
 function renderInline(text: string, keyBase: string): ReactNode[] {
   const nodes: ReactNode[] = [];
   // 正则匹配：图片 ![alt](url) / 链接 [text](url) / 粗体 **text** / 斜体 *text* / 行内代码 `code`
