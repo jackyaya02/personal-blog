@@ -45,14 +45,14 @@ async function getHomeData() {
       include: { category: true, postTags: { include: { tag: true } } },
       take: 3,
     }),
+    prisma.project.findMany({
+      orderBy: { order: "asc" },
+    }),
     prisma.post.findMany({
       where: { status: { in: ["PUBLISHED", "PINNED"] }, category: { slug: "life" } },
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
       include: { category: true, postTags: { include: { tag: true } } },
       take: 4,
-    }),
-    prisma.project.findMany({
-      orderBy: { order: "asc" },
     }),
   ]);
   // Filter featured projects in JS (workaround for Prisma/Supabase where clause issue)
